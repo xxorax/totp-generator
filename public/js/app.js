@@ -15,7 +15,7 @@ function truncateTo(str, digits) {
 }
 
 function parseURLSearch(search) {
-  const queryParams = search.substr(1).split('&').reduce(function (q, query) {
+  const queryParams = search.split('&').reduce(function (q, query) {
     const chunks = query.split('=');
     const key = chunks[0];
     let value = decodeURIComponent(chunks[1]);
@@ -26,27 +26,32 @@ function parseURLSearch(search) {
   return queryParams;
 }
 
+const totpDefault = {
+  digits: 6,
+  period: 30,
+  algorithm: 'SHA1'
+};
+
 const app = Vue.createApp({
   data() {
     return {
+      ...totpDefault,
       secret_key: 'JBSWY3DPEHPK3PXP',
-      digits: 6,
-      period: 30,
-      algorithm: 'SHA1',
       updatingIn: 30,
       token: null,
       clipboardButton: null,
+      url: null,
     };
   },
 
   mounted: function () {
-    this.getKeyFromUrl();
-    this.getQueryParameters()
-    this.update();
+    this.change()
 
     this.intervalHandle = setInterval(this.update, 1000);
 
-    this.clipboardButton = new ClipboardJS('#clipboard-button');
+    this.clipboardButton = new ClipboardJS('.clipboard-button');
+
+    window.addEventListener('hashchange', () => this.change())
   },
 
   destroyed: function () {
@@ -63,22 +68,51 @@ const app = Vue.createApp({
       });
     }
   },
-
+  watch: {
+    totp: function () {
+      this.update(true);
+    }
+  },
   methods: {
-    update: function () {
-      this.updatingIn = this.period - (getCurrentSeconds() % this.period);
-      this.token = truncateTo(this.totp.generate(), this.digits);
+    change: function () {
+      this.getFromHash();
+      this.getQueryParameters(window.location.search.substr(1));
+      this.hideLocationFromHistory();
+      this.update(true);
     },
-
-    getKeyFromUrl: function () {
-      const key = document.location.hash.replace(/[#\/]+/, '');
-
-      if (key.length > 0) {
-        this.secret_key = key;
+    update: function (force) {
+      const mod = (getCurrentSeconds() % this.period);
+      this.updatingIn = this.period - mod;
+      if (force || 0 === mod) {
+        this.token = truncateTo(this.totp.generate(), this.digits);
+        this.url = this.getUrl();
       }
     },
-    getQueryParameters: function () {
-      const queryParams = parseURLSearch(window.location.search);
+    getUrl: function () {
+      const url = this.getBaseUrl();
+      const data = [this.secret_key]
+      Object.keys(totpDefault).forEach(prop => {
+        if (this[prop] != totpDefault[prop]) {
+            data.push(prop + '=' + encodeURIComponent(this[prop]))
+        }
+      })
+      url.hash = '#' + data.join('&');
+      return url.toString();
+    },
+    getFromHash: function () {
+      const params = document.location.hash.replace(/^[#\/]+/, '').split('&');
+
+      if (params[0] && params[0].length > 0) {
+        this.secret_key = params[0];
+        params.shift();
+      }
+
+      if (params.length) {
+        this.getQueryParameters(params.join('&'))
+      }
+    },
+    getQueryParameters: function (search) {
+      const queryParams = parseURLSearch(search);
 
       if (queryParams.key) {
         this.secret_key = queryParams.key;
@@ -95,6 +129,15 @@ const app = Vue.createApp({
       if (queryParams.algorithm) {
         this.algorithm = queryParams.algorithm;
       }
+    },
+    getBaseUrl: function() {
+      const url = new URL(window.location);
+      url.hash = '';
+      url.search = '';
+      return url;
+    },
+    hideLocationFromHistory: function() {
+      history.replaceState({}, '', this.getBaseUrl().toString());
     }
   }
 });

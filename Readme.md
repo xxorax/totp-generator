@@ -10,15 +10,22 @@ It uses the excellent [otpauth](https://github.com/hectorm/otpauth) package, dow
 
 ## Providing parameters in the URL
 
-### Private key
+You can provide the key, the token digits, period and algorithm in the URL using the URI fragment or query parameters, for examples:
 
-You can provide the key in the URL using the URI fragment or a query parameter, for example: `https://totp.danhersam.com/#/KEY` or `https://totp.danhersam.com?key=KEY`
+```
+https://totp.danhersam.com/#/KEY
+https://totp.danhersam.com/#/KEY&digits=6&period=60&algorithm=SHA256
+https://totp.danhersam.com/?key=KEY
+https://totp.danhersam.com/?digits=6&period=60&algorithm=SHA256&key=KEY
+```
 
-### Additional parameters
-
-You can also pass the token digits, period and algorithm using a query string in the URL, for example: `https://totp.danhersam.com/?digits=6&period=60&algorithm=SHA256&key=KEY`
+The parameters in the URLs, once loaded, are automaticaly removed and not cleared from your browser history (it uses the [history API](https://developer.mozilla.org/en-US/docs/Web/API/History_API)).
 
 See [supported hashing algorithms](https://github.com/hectorm/otpauth#supported-hashing-algorithms) for the complete list.
+
+## Sharing key and parameters
+
+A button is available to copy the URL including the non-default parameters.
 
 ### Import using QR codes
 

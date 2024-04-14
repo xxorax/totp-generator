@@ -66,20 +66,20 @@
       </div>
 
       <div class="content">
+        <button v-bind:data-clipboard-text="url" class="is-pulled-right clipboard-button">Copy URL with secret</button>
+      </div>
+
+      <div class="content">
         <span class="has-text-grey is-size-7">Updating in {{ updatingIn }} seconds</span>
         <progress class="progress is-info is-small" v-bind:value="updatingIn" :max="period"></progress>
       </div>
 
       <div class="box">
-        <p class="title is-size-1 has-text-centered" id="token">{{ token }}</p>
-      </div>
-
-      <div class="control is-clearfix">
-        <a class="button is-large is-light is-pulled-right" id="clipboard-button" data-clipboard-target="#token" title="Copy token to clipboard">
+        <a class="button is-large is-light is-pulled-right clipboard-button" data-clipboard-target="#token" title="Copy token to clipboard">
           <img src="img/clippy.svg" height="36" width="36">
         </a>
+        <p class="title is-size-1 has-text-centered" id="token">{{ token }}</p>
       </div>
-
     </div>
 
   </section>
